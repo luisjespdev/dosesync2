@@ -4,7 +4,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { ref, onValue, push, set } from 'firebase/database';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// 1. IMPORTACIÓN DE ICONOS PROFESIONALES
+// IMPORTACIÓN DE ICONOS PROFESIONALES
 import { Home, Pill, ClipboardList, LogOut, Bell } from 'lucide-react';
 
 import Login from './components/Login'; 
@@ -82,12 +82,19 @@ function App() {
 
   return (
     <div className="app-main">
+      {/* HEADER CON ESTILO MINIMALISTA */}
       <header className="app-header">
         <div className="logo-container header">
-          <img src="/img/logo.png" alt="DoseSync" className="logo-img header" width="40" height="27" />
-          <div className="logo header">{userData?.rol === 'enfermero' ? 'Portal Médico' : 'DoseSync'}</div>
+          <img 
+            src="/img/logo.png" 
+            alt="DoseSync" 
+            className="logo-img header-profesional" 
+          />
+          <span className="logo-texto-minimalista">
+            {userData?.rol === 'enfermero' ? 'Portal Médico' : 'DoseSync'}
+          </span>
         </div>
-        {/* BOTÓN SALIR CON ICONO */}
+        
         <button onClick={() => auth.signOut()} className="btn btn-sm btn-danger header-btn-right">
           <LogOut size={16} style={{ marginRight: '5px' }} /> Salir
         </button>
@@ -128,7 +135,6 @@ function App() {
               exit={{ scale: 0.5, opacity: 0, y: 100 }}
               transition={{ type: "spring", stiffness: 260, damping: 20 }}
             >
-              {/* ICONO DE ALERTA EN EL MODAL */}
               <Bell size={40} color="#e74c3c" style={{ marginBottom: '10px' }} />
               <p className="modal-titulo">Hora de tomar: <br/><strong>{modalData.nombre}</strong></p>
               <p style={{ color: '#666', marginTop: '-10px', marginBottom: '15px' }}>Dosis: {modalData.dosis}</p>
@@ -142,7 +148,6 @@ function App() {
         )}
       </AnimatePresence>
 
-      {/* NAVEGACIÓN INFERIOR CON ICONOS PROFESIONALES */}
       {userData?.rol === 'paciente' && (
         <nav className="bottom-nav">
           <button className={`nav-item ${activeTab === 'home' ? 'active' : ''}`} onClick={() => setActiveTab('home')}>
