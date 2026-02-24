@@ -2,6 +2,17 @@ import { useState, useEffect } from 'react';
 import { db } from '../firebase';
 import { ref, onValue, set } from 'firebase/database';
 
+// 1. IMPORTACIÓN DE ICONOS PROFESIONALES
+import { 
+  Send, 
+  Users, 
+  MessageSquare, 
+  Hash, 
+  CheckCircle2, 
+  XCircle, 
+  Clock 
+} from 'lucide-react';
+
 export default function MedicoDashboard({ userData }) {
   const [reportes, setReportes] = useState([]);
   const [nota, setNota] = useState("");
@@ -47,11 +58,15 @@ export default function MedicoDashboard({ userData }) {
   return (
     <div style={{ textAlign: 'center' }}>
       <div className="nurse-code-card">
-        <h3>Tu Código de Médico</h3>
+        <h3 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+          <Hash size={20} color="#3498db" /> Tu Código de Médico
+        </h3>
         <strong className="nurse-code-text">{userData.miCodigoMedico}</strong>
         
         <div style={{ marginTop: '1.5rem', borderTop: '1px solid #ddd', paddingTop: '1rem' }}>
-          <h4>Enviar Indicación Médica</h4>
+          <h4 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+            <MessageSquare size={18} color="#2ecc71" /> Enviar Indicación Médica
+          </h4>
           <textarea 
             value={nota}
             onChange={(e) => setNota(e.target.value)}
@@ -62,20 +77,30 @@ export default function MedicoDashboard({ userData }) {
               borderRadius: '8px', 
               border: '1px solid #ccc',
               minHeight: '80px',
-              fontFamily: 'inherit'
+              fontFamily: 'inherit',
+              marginBottom: '10px'
             }}
           />
           <button 
             className="btn btn-primary" 
             onClick={enviarNota}
-            style={{ marginTop: '10px', width: '100%' }}
+            style={{ 
+              width: '100%', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              gap: '8px' 
+            }}
           >
-            Publicar Nota para Pacientes
+            <Send size={16} /> Publicar Nota para Pacientes
           </button>
         </div>
       </div>
 
-      <h2>Historial de Mis Pacientes</h2>
+      <h2 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginTop: '2rem' }}>
+        <Users size={24} /> Historial de Mis Pacientes
+      </h2>
+
       <ul className="lista-medicamentos">
         {reportes.length === 0 ? (
           <li className="historial-empty">Aún no hay reportes de pacientes vinculados.</li>
@@ -84,14 +109,18 @@ export default function MedicoDashboard({ userData }) {
             <li key={r.id} className="medicamento-item">
               <div className="medicamento-info">
                 <strong>{r.pacienteEmail}</strong>
-                {/* MODIFICADO: Ahora muestra Medicamento, Dosis y Hora */}
                 <span>{r.medicamento} - <small>Dosis: {r.dosis || 'N/A'}</small> ({r.hora})</span>
-                <div className="info-subtext">
+                <div className="info-subtext" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <Clock size={12} />
                   {new Date(r.fecha).toLocaleDateString()} - {new Date(r.fecha).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                 </div>
               </div>
-              <span className={`estado ${r.estado}`}>
-                {r.estado === 'tomado' ? '✅ Tomado' : '❌ Omitido'}
+              <span className={`estado ${r.estado}`} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                {r.estado === 'tomado' ? (
+                  <><CheckCircle2 size={16} /> Tomado</>
+                ) : (
+                  <><XCircle size={16} /> Omitido</>
+                )}
               </span>
             </li>
           ))

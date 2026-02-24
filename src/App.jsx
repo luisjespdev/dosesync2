@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { auth, db } from './firebase'; 
 import { onAuthStateChanged } from 'firebase/auth';
 import { ref, onValue, push, set } from 'firebase/database';
-// 1. Importación de Framer Motion para las animaciones
 import { motion, AnimatePresence } from 'framer-motion';
+
+// 1. IMPORTACIÓN DE ICONOS PROFESIONALES
+import { Home, Pill, ClipboardList, LogOut, Bell } from 'lucide-react';
 
 import Login from './components/Login'; 
 import PacienteDashboard from './components/PacienteDashboard';
@@ -15,8 +17,6 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('home');
 
-  // Estados para el Modal Global de Alarma
-  // AÑADIDO: campo 'dosis' en el estado inicial
   const [showModal, setShowModal] = useState(false);
   const [modalData, setModalData] = useState({ nombre: '', hora: '', dosis: '' });
 
@@ -42,7 +42,6 @@ function App() {
     return () => unsubscribe();
   }, []);
 
-  // MODIFICADO: ahora recibe la dosis como parámetro
   const dispararAlarma = (nombre, hora, dosis) => {
     setModalData({ nombre, hora, dosis });
     setShowModal(true);
@@ -54,7 +53,6 @@ function App() {
 
     try {
       const timestamp = new Date().toISOString();
-      // MODIFICADO: incluimos 'dosis' en el objeto que se guarda en Firebase
       const dataToma = {
         pacienteEmail: user.email,
         medicamento: modalData.nombre,
@@ -64,11 +62,9 @@ function App() {
         fecha: timestamp
       };
 
-      // 1. Guardar en el historial privado del Paciente
       const historialRef = ref(db, `historial/${user.uid}`);
       await set(push(historialRef), dataToma);
 
-      // 2. Si hay un médico vinculado, guardar copia para su vista
       if (userData?.codigoVinculado) {
         const reporteMedicoRef = ref(db, `reportesMedicos/${userData.codigoVinculado}`);
         await set(push(reporteMedicoRef), dataToma);
@@ -91,7 +87,10 @@ function App() {
           <img src="/img/logo.png" alt="DoseSync" className="logo-img header" width="40" height="27" />
           <div className="logo header">{userData?.rol === 'enfermero' ? 'Portal Médico' : 'DoseSync'}</div>
         </div>
-        <button onClick={() => auth.signOut()} className="btn btn-sm btn-danger header-btn-right">Salir</button>
+        {/* BOTÓN SALIR CON ICONO */}
+        <button onClick={() => auth.signOut()} className="btn btn-sm btn-danger header-btn-right">
+          <LogOut size={16} style={{ marginRight: '5px' }} /> Salir
+        </button>
       </header>
 
       <main className="screens">
@@ -111,7 +110,6 @@ function App() {
         </section>
       </main>
 
-      {/* MODAL CON ANIMACIÓN PROFESIONAL */}
       <AnimatePresence>
         {showModal && (
           <div className="modal">
@@ -130,8 +128,9 @@ function App() {
               exit={{ scale: 0.5, opacity: 0, y: 100 }}
               transition={{ type: "spring", stiffness: 260, damping: 20 }}
             >
+              {/* ICONO DE ALERTA EN EL MODAL */}
+              <Bell size={40} color="#e74c3c" style={{ marginBottom: '10px' }} />
               <p className="modal-titulo">Hora de tomar: <br/><strong>{modalData.nombre}</strong></p>
-              {/* MOSTRAR DOSIS EN EL MODAL */}
               <p style={{ color: '#666', marginTop: '-10px', marginBottom: '15px' }}>Dosis: {modalData.dosis}</p>
               
               <div className="modal-actions">
@@ -143,16 +142,20 @@ function App() {
         )}
       </AnimatePresence>
 
+      {/* NAVEGACIÓN INFERIOR CON ICONOS PROFESIONALES */}
       {userData?.rol === 'paciente' && (
         <nav className="bottom-nav">
           <button className={`nav-item ${activeTab === 'home' ? 'active' : ''}`} onClick={() => setActiveTab('home')}>
-            <span className="nav-icon">🏠</span><span className="nav-label">Inicio</span>
+            <Home size={22} className="nav-icon" />
+            <span className="nav-label">Inicio</span>
           </button>
           <button className={`nav-item ${activeTab === 'recordatorios' ? 'active' : ''}`} onClick={() => setActiveTab('recordatorios')}>
-            <span className="nav-icon">💊</span><span className="nav-label">Recordatorios</span>
+            <Pill size={22} className="nav-icon" />
+            <span className="nav-label">Recordatorios</span>
           </button>
           <button className={`nav-item ${activeTab === 'historial' ? 'active' : ''}`} onClick={() => setActiveTab('historial')}>
-            <span className="nav-icon">📊</span><span className="nav-label">Historial</span>
+            <ClipboardList size={22} className="nav-icon" />
+            <span className="nav-label">Historial</span>
           </button>
         </nav>
       )}

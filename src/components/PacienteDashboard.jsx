@@ -3,6 +3,18 @@ import { db, auth } from '../firebase';
 import { ref, onValue, remove } from 'firebase/database'; 
 import FormularioMedicamento from './FormularioMedicamento';
 
+// 1. IMPORTACIÓN DE ICONOS PROFESIONALES
+import { 
+  Stethoscope, 
+  Lightbulb, 
+  Link, 
+  Pencil, 
+  Trash2, 
+  CheckCircle2, 
+  XCircle, 
+  Info 
+} from 'lucide-react';
+
 export default function PacienteDashboard({ userData, activeTab, dispararAlarma }) {
   const [medicamentos, setMedicamentos] = useState([]);
   const [historial, setHistorial] = useState([]);
@@ -58,7 +70,6 @@ export default function PacienteDashboard({ userData, activeTab, dispararAlarma 
         const delay = next - now;
 
         timeoutsRef.current[m.id] = setTimeout(() => {
-          // CAMBIO: Ahora enviamos el nombre, la hora Y la dosis
           dispararAlarma(m.nombre, m.hora, m.dosis);
         }, delay);
       });
@@ -90,24 +101,35 @@ export default function PacienteDashboard({ userData, activeTab, dispararAlarma 
 
   return (
     <div>
+      {/* PESTAÑA: INICIO (HOME) */}
       {activeTab === 'home' && (
         <>
           <h2>Bienvenido a DoseSync</h2>
+          
           <div className="curiosidad-card" style={{ borderLeft: '5px solid #e74c3c', marginBottom: '1rem' }}>
-            <h4>Indicación Médica 🏥</h4>
+            <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Stethoscope size={18} /> Indicación Médica
+            </h4>
             <p style={{ fontStyle: 'italic' }}>"{notaDelMedico}"</p>
           </div>
+
           <div className="curiosidad-card">
-            <h4>¿Sabías que...? 💡</h4>
+            <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Lightbulb size={18} /> ¿Sabías que...?
+            </h4>
             <p>{datoAzar}</p>
           </div>
+
           <div className="curiosidad-card" style={{marginTop: '1rem', opacity: 0.8}}>
-            <h4>Estado de Vinculación</h4>
+            <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Link size={18} /> Estado de Vinculación
+            </h4>
             <p>Conectado con el código: <strong>{userData?.codigoVinculado || 'Sin vincular'}</strong></p>
           </div>
         </>
       )}
 
+      {/* PESTAÑA: RECORDATORIOS */}
       {activeTab === 'recordatorios' && (
         <>
           <h2>Gestionar Medicamentos</h2>
@@ -127,8 +149,12 @@ export default function PacienteDashboard({ userData, activeTab, dispararAlarma 
                     <span>{m.dosis} · {m.hora}</span>
                   </div>
                   <div className="medicamento-actions">
-                    <button className="btn-icon" onClick={() => setEditando(m)}>✏️</button>
-                    <button className="btn-icon" onClick={() => eliminarMedicamento(m.id)}>🗑️</button>
+                    <button className="btn-icon" onClick={() => setEditando(m)}>
+                      <Pencil size={18} color="#3498db" />
+                    </button>
+                    <button className="btn-icon" onClick={() => eliminarMedicamento(m.id)}>
+                      <Trash2 size={18} color="#e74c3c" />
+                    </button>
                   </div>
                 </li>
               ))
@@ -137,6 +163,7 @@ export default function PacienteDashboard({ userData, activeTab, dispararAlarma 
         </>
       )}
 
+      {/* PESTAÑA: HISTORIAL */}
       {activeTab === 'historial' && (
         <>
           <h2>Historial de Tomas</h2>
@@ -146,15 +173,23 @@ export default function PacienteDashboard({ userData, activeTab, dispararAlarma 
             ) : (
               historial.map(h => (
                 <li key={h.id} className="historial-item">
-                  {/* CAMBIO: Se añadió la dosis en el historial visual del paciente */}
-                  <div>
-                    <strong>{h.medicamento}</strong>
-                    <br/>
-                    <small style={{color: '#666'}}>Dosis: {h.dosis || 'N/A'}</small>
-                    <br/>
-                    <span>{h.hora}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <Info size={16} color="#666" />
+                    <div>
+                      <strong>{h.medicamento}</strong>
+                      <br/>
+                      <small style={{color: '#666'}}>Dosis: {h.dosis || 'N/A'}</small>
+                      <br/>
+                      <span>{h.hora}</span>
+                    </div>
                   </div>
-                  <span className={`estado ${h.estado}`}>{h.estado === 'tomado' ? '✅ Tomado' : '❌ Omitido'}</span>
+                  <span className={`estado ${h.estado}`}>
+                    {h.estado === 'tomado' ? (
+                      <><CheckCircle2 size={14} /> Tomado</>
+                    ) : (
+                      <><XCircle size={14} /> Omitido</>
+                    )}
+                  </span>
                 </li>
               ))
             )}

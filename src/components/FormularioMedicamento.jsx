@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import { db, auth } from '../firebase';
 import { ref, push, set, update } from 'firebase/database'; 
 
+// 1. IMPORTACIÓN DE ICONOS PROFESIONALES
+import { Pill, Syringe, Clock, Save, PlusCircle, XCircle } from 'lucide-react';
+
 export default function FormularioMedicamento({ medicamentoAEditar, alTerminar }) {
   const [nombre, setNombre] = useState('');
   const [dosis, setDosis] = useState('');
   const [hora, setHora] = useState('');
 
-  // Sincronizar campos cuando se pulsa el botón de editar
   useEffect(() => {
     if (medicamentoAEditar) {
       setNombre(medicamentoAEditar.nombre);
@@ -32,7 +34,6 @@ export default function FormularioMedicamento({ medicamentoAEditar, alTerminar }
       const uid = auth.currentUser.uid;
       
       if (medicamentoAEditar) {
-        // LÓGICA DE ACTUALIZACIÓN
         const medRef = ref(db, `medicamentos/${uid}/${medicamentoAEditar.id}`);
         await update(medRef, {
           nombre: nombre.trim(),
@@ -41,7 +42,6 @@ export default function FormularioMedicamento({ medicamentoAEditar, alTerminar }
         });
         alert("¡Medicamento actualizado!");
       } else {
-        // LÓGICA DE CREACIÓN
         const medsRef = ref(db, `medicamentos/${uid}`);
         const nuevoMedRef = push(medsRef);
         await set(nuevoMedRef, {
@@ -53,7 +53,6 @@ export default function FormularioMedicamento({ medicamentoAEditar, alTerminar }
         alert("¡Medicamento guardado!");
       }
 
-      // Limpiar y avisar al dashboard
       if (alTerminar) alTerminar();
       setNombre(''); setDosis(''); setHora('');
       
@@ -65,7 +64,11 @@ export default function FormularioMedicamento({ medicamentoAEditar, alTerminar }
 
   return (
     <form onSubmit={handleSubmit} className="form form-card">
-      <label htmlFor="med-nombre">{medicamentoAEditar ? "Editando:" : "Nombre del Medicamento"}</label>
+      {/* SECCIÓN NOMBRE */}
+      <label htmlFor="med-nombre" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <Pill size={16} color="#3498db" />
+        {medicamentoAEditar ? "Editando:" : "Nombre del Medicamento"}
+      </label>
       <input 
         type="text" 
         id="med-nombre" 
@@ -75,7 +78,11 @@ export default function FormularioMedicamento({ medicamentoAEditar, alTerminar }
         placeholder="Ej. Paracetamol" 
       />
 
-      <label htmlFor="med-dosis">Dosis</label>
+      {/* SECCIÓN DOSIS */}
+      <label htmlFor="med-dosis" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <Syringe size={16} color="#9b59b6" />
+        Dosis
+      </label>
       <input 
         type="text" 
         id="med-dosis" 
@@ -85,7 +92,11 @@ export default function FormularioMedicamento({ medicamentoAEditar, alTerminar }
         placeholder="Ej. 1 tableta de 500mg" 
       />
 
-      <label htmlFor="med-hora">Hora de la toma</label>
+      {/* SECCIÓN HORA */}
+      <label htmlFor="med-hora" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <Clock size={16} color="#e67e22" />
+        Hora de la toma
+      </label>
       <input 
         type="time" 
         id="med-hora" 
@@ -94,18 +105,40 @@ export default function FormularioMedicamento({ medicamentoAEditar, alTerminar }
         required 
       />
 
-      <button type="submit" className="btn btn-primary" style={{ marginTop: '0.5rem' }}>
-        {medicamentoAEditar ? "Guardar Cambios" : "Añadir Recordatorio"}
+      {/* BOTÓN PRINCIPAL */}
+      <button 
+        type="submit" 
+        className="btn btn-primary" 
+        style={{ 
+          marginTop: '0.5rem', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          gap: '8px' 
+        }}
+      >
+        {medicamentoAEditar ? (
+          <><Save size={18} /> Guardar Cambios</>
+        ) : (
+          <><PlusCircle size={18} /> Añadir Recordatorio</>
+        )}
       </button>
 
+      {/* BOTÓN CANCELAR */}
       {medicamentoAEditar && (
         <button 
           type="button" 
           className="btn btn-secondary" 
           onClick={alTerminar}
-          style={{ marginTop: '0.5rem' }}
+          style={{ 
+            marginTop: '0.5rem', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            gap: '8px' 
+          }}
         >
-          Cancelar Edición
+          <XCircle size={18} /> Cancelar Edición
         </button>
       )}
     </form>
