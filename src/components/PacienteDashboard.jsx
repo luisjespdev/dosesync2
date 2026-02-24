@@ -6,13 +6,47 @@ import FormularioMedicamento from './FormularioMedicamento';
 export default function PacienteDashboard({ userData, activeTab, dispararAlarma }) {
   const [medicamentos, setMedicamentos] = useState([]);
   const [historial, setHistorial] = useState([]);
-  const [editando, setEditando] = useState(null); // Estado para edición
+  const [editando, setEditando] = useState(null); 
+  const [notaDelMedico, setNotaDelMedico] = useState("Sin instrucciones nuevas.");
+  const [datoAzar, setDatoAzar] = useState("");
   const timeoutsRef = useRef({});
+
+  // 1. Lista de Datos Curiosos
+  const datosCuriosos = [
+    "Tomar agua suficiente ayuda a que tu cuerpo absorba mejor ciertos medicamentos.",
+    "Mantener una rutina fija mejora la efectividad de tu tratamiento en un 40%.",
+    "¿Sabías que algunos alimentos pueden interferir con tus medicinas? Consulta siempre a tu médico.",
+    "Guardar tus medicamentos en un lugar fresco y seco ayuda a mantener su potencia.",
+    "DoseSync te ayuda a mantener el control, pero tu constancia es la clave del éxito."
+  ];
 
   useEffect(() => {
     if (!auth.currentUser) return;
     const uid = auth.currentUser.uid;
 
+    // 2. Rotación de Datos Curiosos (Solo al entrar al Home)
+    if (activeTab === 'home') {
+      const indice = Math.floor(Math.random() * datosCuriosos.length);
+      setDatoAzar(datosCuriosos[indice]);
+    }
+
+    // 3. Escuchar Nota del Médico en tiempo real
+    if (userData?.codigoVinculado) {
+      const notaRef = ref(db, `notasMedicos/${userData.codigoVinculado}`);
+      const unsubNota = onValue(notaRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) setNotaDelMedico(data.mensaje);
+      });
+      // Limpiar nota al desmontar
+      return () => unsubNota();
+    }
+  }, [activeTab, userData?.codigoVinculado]);
+
+  useEffect(() => {
+    if (!auth.currentUser) return;
+    const uid = auth.currentUser.uid;
+
+    // 4. Escuchar Medicamentos y Programar Alarmas
     const medsRef = ref(db, `medicamentos/${uid}`);
     const unsubMed = onValue(medsRef, (snapshot) => {
       const data = snapshot.val();
@@ -36,6 +70,7 @@ export default function PacienteDashboard({ userData, activeTab, dispararAlarma 
       });
     });
 
+    // 5. Escuchar Historial
     const histRef = ref(db, `historial/${uid}`);
     const unsubHis = onValue(histRef, (snapshot) => {
       const data = snapshot.val();
@@ -49,7 +84,6 @@ export default function PacienteDashboard({ userData, activeTab, dispararAlarma 
     };
   }, [dispararAlarma]);
 
-  // FUNCIÓN PARA ELIMINAR
   const eliminarMedicamento = async (id) => {
     if (window.confirm("¿Estás seguro de que quieres eliminar este recordatorio?")) {
       try {
@@ -63,20 +97,31 @@ export default function PacienteDashboard({ userData, activeTab, dispararAlarma 
 
   return (
     <div>
+      {/* PESTAÑA: INICIO (HOME) */}
       {activeTab === 'home' && (
         <>
           <h2>Bienvenido a DoseSync</h2>
+          
+          {/* Tarjeta de Instrucción Médica */}
+          <div className="curiosidad-card" style={{ borderLeft: '5px solid #e74c3c', marginBottom: '1rem' }}>
+            <h4>Indicación Médica 🏥</h4>
+            <p style={{ fontStyle: 'italic' }}>"{notaDelMedico}"</p>
+          </div>
+
+          {/* Tarjeta de Dato Curioso Rotativo */}
           <div className="curiosidad-card">
+            <h4>¿Sabías que...? 💡</h4>
+            <p>{datoAzar}</p>
+          </div>
+
+          <div className="curiosidad-card" style={{marginTop: '1rem', opacity: 0.8}}>
             <h4>Estado de Vinculación</h4>
             <p>Conectado con el código: <strong>{userData?.codigoVinculado || 'Sin vincular'}</strong></p>
-          </div>
-          <div className="curiosidad-card" style={{marginTop: '1rem'}}>
-            <h4>Dato curioso</h4>
-            <p>Tomar agua suficiente ayuda a que tu cuerpo absorba mejor ciertos medicamentos.</p>
           </div>
         </>
       )}
 
+      {/* PESTAÑA: RECORDATORIOS */}
       {activeTab === 'recordatorios' && (
         <>
           <h2>Gestionar Medicamentos</h2>
@@ -107,6 +152,7 @@ export default function PacienteDashboard({ userData, activeTab, dispararAlarma 
         </>
       )}
 
+      {/* PESTAÑA: HISTORIAL */}
       {activeTab === 'historial' && (
         <>
           <h2>Historial de Tomas</h2>
