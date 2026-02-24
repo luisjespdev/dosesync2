@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { auth, db } from './firebase'; 
 import { onAuthStateChanged } from 'firebase/auth';
-import { ref, onValue, push, set } from 'firebase/database'; // Importaciones de Realtime Database
+import { ref, onValue, push, set } from 'firebase/database';
+// 1. Importación de Framer Motion para las animaciones
+import { motion, AnimatePresence } from 'framer-motion';
 
-import Login from './components/login'; 
+import Login from './components/Login'; 
 import PacienteDashboard from './components/PacienteDashboard';
 import MedicoDashboard from './components/MedicoDashboard';
 
@@ -21,7 +23,7 @@ function App() {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
-        // En Realtime Database usamos ref() y onValue() para escuchar cambios
+        // Escuchar datos del usuario en tiempo real
         const userRef = ref(db, 'usuarios/' + currentUser.uid);
         onValue(userRef, (snapshot) => {
           const data = snapshot.val();
@@ -45,10 +47,8 @@ function App() {
     setShowModal(true);
   };
 
-  // FUNCIÓN ARREGLADA PARA REALTIME DATABASE
   const registrarToma = async (estado) => {
     setShowModal(false);
-
     if (!user) return;
 
     try {
@@ -61,22 +61,20 @@ function App() {
         fecha: timestamp
       };
 
-      // 1. Guardar en el historial privado del Paciente (Realtime Database)
+      // 1. Guardar en el historial privado del Paciente
       const historialRef = ref(db, `historial/${user.uid}`);
-      const nuevaTomaRef = push(historialRef);
-      await set(nuevaTomaRef, dataToma);
+      await set(push(historialRef), dataToma);
 
-      // 2. Si hay un médico vinculado, guardar copia en su carpeta de reportes
+      // 2. Si hay un médico vinculado, guardar copia para su vista
       if (userData?.codigoVinculado) {
         const reporteMedicoRef = ref(db, `reportesMedicos/${userData.codigoVinculado}`);
-        const nuevoReporteRef = push(reporteMedicoRef);
-        await set(nuevoReporteRef, dataToma);
+        await set(push(reporteMedicoRef), dataToma);
       }
       
-      console.log(`Toma registrada en RTDB: ${modalData.nombre} - ${estado}`);
+      console.log(`DoseSync: Toma registrada - ${modalData.nombre}`);
     } catch (error) {
       console.error("Error al registrar toma:", error);
-      alert("Error al conectar con Realtime Database.");
+      alert("Error al conectar con la base de datos.");
     }
   };
 
@@ -110,18 +108,34 @@ function App() {
         </section>
       </main>
 
-      {showModal && (
-        <div className="modal">
-          <div className="modal-backdrop" onClick={() => setShowModal(false)}></div>
-          <div className="modal-content">
-            <p className="modal-titulo">Hora de tomar: <br/><strong>{modalData.nombre}</strong></p>
-            <div className="modal-actions">
-              <button className="btn btn-success" onClick={() => registrarToma('tomado')}>✅ Tomado</button>
-              <button className="btn btn-danger" onClick={() => registrarToma('omitido')}>❌ Omitido</button>
-            </div>
+      {/* 2. MODAL CON ANIMACIÓN PROFESIONAL */}
+      <AnimatePresence>
+        {showModal && (
+          <div className="modal">
+            <motion.div 
+              className="modal-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowModal(false)}
+            ></motion.div>
+
+            <motion.div 
+              className="modal-content"
+              initial={{ scale: 0.5, opacity: 0, y: 100 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.5, opacity: 0, y: 100 }}
+              transition={{ type: "spring", stiffness: 260, damping: 20 }}
+            >
+              <p className="modal-titulo">Hora de tomar: <br/><strong>{modalData.nombre}</strong></p>
+              <div className="modal-actions">
+                <button className="btn btn-success" onClick={() => registrarToma('tomado')}>✅ Tomado</button>
+                <button className="btn btn-danger" onClick={() => registrarToma('omitido')}>❌ Omitido</button>
+              </div>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
 
       {userData?.rol === 'paciente' && (
         <nav className="bottom-nav">
