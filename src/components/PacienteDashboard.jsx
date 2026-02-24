@@ -1,37 +1,32 @@
 import { useState, useEffect, useRef } from 'react';
 import { db, auth } from '../firebase';
-import { ref, onValue, query, orderByChild, equalTo } from 'firebase/database'; // Importaciones de Realtime
+import { ref, onValue, remove } from 'firebase/database'; 
 import FormularioMedicamento from './FormularioMedicamento';
 
 export default function PacienteDashboard({ userData, activeTab, dispararAlarma }) {
   const [medicamentos, setMedicamentos] = useState([]);
   const [historial, setHistorial] = useState([]);
+  const [editando, setEditando] = useState(null); // Estado para edición
   const timeoutsRef = useRef({});
 
   useEffect(() => {
     if (!auth.currentUser) return;
-
     const uid = auth.currentUser.uid;
 
-    // 1. Escuchar MEDICAMENTOS en Realtime Database
     const medsRef = ref(db, `medicamentos/${uid}`);
     const unsubMed = onValue(medsRef, (snapshot) => {
       const data = snapshot.val();
       const listaMeds = data ? Object.keys(data).map(key => ({ id: key, ...data[key] })) : [];
-      
       setMedicamentos(listaMeds);
 
-      // Limpiar alarmas anteriores
       Object.values(timeoutsRef.current).forEach(clearTimeout);
       timeoutsRef.current = {};
 
-      // Programar alarmas
       listaMeds.forEach(m => {
         if (!m.hora) return;
         const now = new Date();
         const [hh, mm] = m.hora.split(':').map(Number);
         let next = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hh, mm, 0);
-        
         if (next <= now) next.setDate(next.getDate() + 1);
         const delay = next - now;
 
@@ -41,27 +36,33 @@ export default function PacienteDashboard({ userData, activeTab, dispararAlarma 
       });
     });
 
-    // 2. Escuchar HISTORIAL en Realtime Database
-    // Nota: Para usar orderByChild, recuerda activar los .indexOn en las reglas de Firebase si es necesario
     const histRef = ref(db, `historial/${uid}`);
     const unsubHis = onValue(histRef, (snapshot) => {
       const data = snapshot.val();
       const listaHis = data ? Object.keys(data).map(key => ({ id: key, ...data[key] })) : [];
-      
-      // Ordenar por fecha (descendente) manualmente ya que RTDB ordena ascendente
       setHistorial(listaHis.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)));
     });
 
     return () => { 
-      unsubMed(); 
-      unsubHis(); 
+      unsubMed(); unsubHis(); 
       Object.values(timeoutsRef.current).forEach(clearTimeout);
     };
   }, [dispararAlarma]);
 
+  // FUNCIÓN PARA ELIMINAR
+  const eliminarMedicamento = async (id) => {
+    if (window.confirm("¿Estás seguro de que quieres eliminar este recordatorio?")) {
+      try {
+        const uid = auth.currentUser.uid;
+        await remove(ref(db, `medicamentos/${uid}/${id}`));
+      } catch (error) {
+        alert("Error al eliminar.");
+      }
+    }
+  };
+
   return (
     <div>
-      {/* PESTAÑA: INICIO */}
       {activeTab === 'home' && (
         <>
           <h2>Bienvenido a DoseSync</h2>
@@ -76,11 +77,14 @@ export default function PacienteDashboard({ userData, activeTab, dispararAlarma 
         </>
       )}
 
-      {/* PESTAÑA: RECORDATORIOS */}
       {activeTab === 'recordatorios' && (
         <>
           <h2>Gestionar Medicamentos</h2>
-          <FormularioMedicamento />
+          <FormularioMedicamento 
+            medicamentoAEditar={editando} 
+            alTerminar={() => setEditando(null)} 
+          />
+          
           <h3>Mis Medicamentos</h3>
           <ul className="lista-medicamentos">
             {medicamentos.length === 0 ? (
@@ -92,6 +96,10 @@ export default function PacienteDashboard({ userData, activeTab, dispararAlarma 
                     <strong>{m.nombre}</strong>
                     <span>{m.dosis} · {m.hora}</span>
                   </div>
+                  <div className="medicamento-actions">
+                    <button className="btn-icon" onClick={() => setEditando(m)}>✏️</button>
+                    <button className="btn-icon" onClick={() => eliminarMedicamento(m.id)}>🗑️</button>
+                  </div>
                 </li>
               ))
             )}
@@ -99,7 +107,6 @@ export default function PacienteDashboard({ userData, activeTab, dispararAlarma 
         </>
       )}
 
-      {/* PESTAÑA: HISTORIAL */}
       {activeTab === 'historial' && (
         <>
           <h2>Historial de Tomas</h2>

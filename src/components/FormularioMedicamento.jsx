@@ -1,16 +1,28 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { db, auth } from '../firebase';
-import { ref, push, set } from 'firebase/database'; // Importaciones para Realtime Database
+import { ref, push, set, update } from 'firebase/database'; 
 
-export default function FormularioMedicamento() {
+export default function FormularioMedicamento({ medicamentoAEditar, alTerminar }) {
   const [nombre, setNombre] = useState('');
   const [dosis, setDosis] = useState('');
   const [hora, setHora] = useState('');
 
+  // Sincronizar campos cuando se pulsa el botón de editar
+  useEffect(() => {
+    if (medicamentoAEditar) {
+      setNombre(medicamentoAEditar.nombre);
+      setDosis(medicamentoAEditar.dosis);
+      setHora(medicamentoAEditar.hora);
+    } else {
+      setNombre('');
+      setDosis('');
+      setHora('');
+    }
+  }, [medicamentoAEditar]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Verificamos que el usuario esté autenticado
     if (!auth.currentUser) {
       alert("Debes iniciar sesión primero.");
       return;
@@ -19,34 +31,41 @@ export default function FormularioMedicamento() {
     try {
       const uid = auth.currentUser.uid;
       
-      // Creamos una referencia a la "carpeta" de medicamentos del usuario
-      const medsRef = ref(db, `medicamentos/${uid}`);
-      
-      // push() genera un ID único automáticamente (como el ID de documento en Firestore)
-      const nuevoMedRef = push(medsRef);
+      if (medicamentoAEditar) {
+        // LÓGICA DE ACTUALIZACIÓN
+        const medRef = ref(db, `medicamentos/${uid}/${medicamentoAEditar.id}`);
+        await update(medRef, {
+          nombre: nombre.trim(),
+          dosis: dosis.trim(),
+          hora: hora,
+        });
+        alert("¡Medicamento actualizado!");
+      } else {
+        // LÓGICA DE CREACIÓN
+        const medsRef = ref(db, `medicamentos/${uid}`);
+        const nuevoMedRef = push(medsRef);
+        await set(nuevoMedRef, {
+          nombre: nombre.trim(),
+          dosis: dosis.trim(),
+          hora: hora,
+          creadoEn: Date.now()
+        });
+        alert("¡Medicamento guardado!");
+      }
 
-      await set(nuevoMedRef, {
-        nombre: nombre.trim(),
-        dosis: dosis.trim(),
-        hora: hora,
-        creadoEn: Date.now()
-      });
-
-      // Limpiar el formulario
-      setNombre('');
-      setDosis('');
-      setHora('');
-      alert("¡Medicamento guardado con éxito!");
+      // Limpiar y avisar al dashboard
+      if (alTerminar) alTerminar();
+      setNombre(''); setDosis(''); setHora('');
       
     } catch (error) {
-      console.error("Error al guardar:", error);
-      alert("Error al conectar con Realtime Database: " + error.message);
+      console.error("Error:", error);
+      alert("Error al conectar con la base de datos.");
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="form form-card">
-      <label htmlFor="med-nombre">Nombre del Medicamento</label>
+      <label htmlFor="med-nombre">{medicamentoAEditar ? "Editando:" : "Nombre del Medicamento"}</label>
       <input 
         type="text" 
         id="med-nombre" 
@@ -76,8 +95,19 @@ export default function FormularioMedicamento() {
       />
 
       <button type="submit" className="btn btn-primary" style={{ marginTop: '0.5rem' }}>
-        Añadir Recordatorio
+        {medicamentoAEditar ? "Guardar Cambios" : "Añadir Recordatorio"}
       </button>
+
+      {medicamentoAEditar && (
+        <button 
+          type="button" 
+          className="btn btn-secondary" 
+          onClick={alTerminar}
+          style={{ marginTop: '0.5rem' }}
+        >
+          Cancelar Edición
+        </button>
+      )}
     </form>
   );
 }
