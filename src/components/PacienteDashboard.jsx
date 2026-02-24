@@ -11,7 +11,6 @@ export default function PacienteDashboard({ userData, activeTab, dispararAlarma 
   const [datoAzar, setDatoAzar] = useState("");
   const timeoutsRef = useRef({});
 
-  // 1. Lista de Datos Curiosos
   const datosCuriosos = [
     "Tomar agua suficiente ayuda a que tu cuerpo absorba mejor ciertos medicamentos.",
     "Mantener una rutina fija mejora la efectividad de tu tratamiento en un 40%.",
@@ -22,22 +21,17 @@ export default function PacienteDashboard({ userData, activeTab, dispararAlarma 
 
   useEffect(() => {
     if (!auth.currentUser) return;
-    const uid = auth.currentUser.uid;
-
-    // 2. Rotación de Datos Curiosos (Solo al entrar al Home)
     if (activeTab === 'home') {
       const indice = Math.floor(Math.random() * datosCuriosos.length);
       setDatoAzar(datosCuriosos[indice]);
     }
 
-    // 3. Escuchar Nota del Médico en tiempo real
     if (userData?.codigoVinculado) {
       const notaRef = ref(db, `notasMedicos/${userData.codigoVinculado}`);
       const unsubNota = onValue(notaRef, (snapshot) => {
         const data = snapshot.val();
         if (data) setNotaDelMedico(data.mensaje);
       });
-      // Limpiar nota al desmontar
       return () => unsubNota();
     }
   }, [activeTab, userData?.codigoVinculado]);
@@ -46,7 +40,6 @@ export default function PacienteDashboard({ userData, activeTab, dispararAlarma 
     if (!auth.currentUser) return;
     const uid = auth.currentUser.uid;
 
-    // 4. Escuchar Medicamentos y Programar Alarmas
     const medsRef = ref(db, `medicamentos/${uid}`);
     const unsubMed = onValue(medsRef, (snapshot) => {
       const data = snapshot.val();
@@ -65,12 +58,12 @@ export default function PacienteDashboard({ userData, activeTab, dispararAlarma 
         const delay = next - now;
 
         timeoutsRef.current[m.id] = setTimeout(() => {
-          dispararAlarma(m.nombre, m.hora);
+          // CAMBIO: Ahora enviamos el nombre, la hora Y la dosis
+          dispararAlarma(m.nombre, m.hora, m.dosis);
         }, delay);
       });
     });
 
-    // 5. Escuchar Historial
     const histRef = ref(db, `historial/${uid}`);
     const unsubHis = onValue(histRef, (snapshot) => {
       const data = snapshot.val();
@@ -97,23 +90,17 @@ export default function PacienteDashboard({ userData, activeTab, dispararAlarma 
 
   return (
     <div>
-      {/* PESTAÑA: INICIO (HOME) */}
       {activeTab === 'home' && (
         <>
           <h2>Bienvenido a DoseSync</h2>
-          
-          {/* Tarjeta de Instrucción Médica */}
           <div className="curiosidad-card" style={{ borderLeft: '5px solid #e74c3c', marginBottom: '1rem' }}>
             <h4>Indicación Médica 🏥</h4>
             <p style={{ fontStyle: 'italic' }}>"{notaDelMedico}"</p>
           </div>
-
-          {/* Tarjeta de Dato Curioso Rotativo */}
           <div className="curiosidad-card">
             <h4>¿Sabías que...? 💡</h4>
             <p>{datoAzar}</p>
           </div>
-
           <div className="curiosidad-card" style={{marginTop: '1rem', opacity: 0.8}}>
             <h4>Estado de Vinculación</h4>
             <p>Conectado con el código: <strong>{userData?.codigoVinculado || 'Sin vincular'}</strong></p>
@@ -121,7 +108,6 @@ export default function PacienteDashboard({ userData, activeTab, dispararAlarma 
         </>
       )}
 
-      {/* PESTAÑA: RECORDATORIOS */}
       {activeTab === 'recordatorios' && (
         <>
           <h2>Gestionar Medicamentos</h2>
@@ -129,7 +115,6 @@ export default function PacienteDashboard({ userData, activeTab, dispararAlarma 
             medicamentoAEditar={editando} 
             alTerminar={() => setEditando(null)} 
           />
-          
           <h3>Mis Medicamentos</h3>
           <ul className="lista-medicamentos">
             {medicamentos.length === 0 ? (
@@ -152,7 +137,6 @@ export default function PacienteDashboard({ userData, activeTab, dispararAlarma 
         </>
       )}
 
-      {/* PESTAÑA: HISTORIAL */}
       {activeTab === 'historial' && (
         <>
           <h2>Historial de Tomas</h2>
@@ -162,7 +146,14 @@ export default function PacienteDashboard({ userData, activeTab, dispararAlarma 
             ) : (
               historial.map(h => (
                 <li key={h.id} className="historial-item">
-                  <div><strong>{h.medicamento}</strong><br/><span>{h.hora}</span></div>
+                  {/* CAMBIO: Se añadió la dosis en el historial visual del paciente */}
+                  <div>
+                    <strong>{h.medicamento}</strong>
+                    <br/>
+                    <small style={{color: '#666'}}>Dosis: {h.dosis || 'N/A'}</small>
+                    <br/>
+                    <span>{h.hora}</span>
+                  </div>
                   <span className={`estado ${h.estado}`}>{h.estado === 'tomado' ? '✅ Tomado' : '❌ Omitido'}</span>
                 </li>
               ))

@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react';
 import { db } from '../firebase';
-import { ref, onValue, set } from 'firebase/database'; // Importamos 'set' para guardar la nota
+import { ref, onValue, set } from 'firebase/database';
 
 export default function MedicoDashboard({ userData }) {
   const [reportes, setReportes] = useState([]);
-  const [nota, setNota] = useState(""); // Estado para escribir la nota
+  const [nota, setNota] = useState("");
 
-  // 1. Escuchar reportes de pacientes (Tu código actual)
   useEffect(() => {
     if (!userData?.miCodigoMedico) return;
 
@@ -28,19 +27,17 @@ export default function MedicoDashboard({ userData }) {
     return () => unsubscribe();
   }, [userData]);
 
-  // 2. FUNCIÓN NUEVA: Enviar nota a los pacientes
   const enviarNota = async () => {
     if (!nota.trim() || !userData?.miCodigoMedico) return;
     
     try {
-      // Guardamos la nota en una ruta que el paciente también conoce
       const notaRef = ref(db, `notasMedicos/${userData.miCodigoMedico}`);
       await set(notaRef, {
         mensaje: nota,
         fecha: new Date().toISOString()
       });
       alert("¡Nota enviada a tus pacientes!");
-      setNota(""); // Limpiar el campo tras enviar
+      setNota("");
     } catch (error) {
       console.error("Error al enviar nota:", error);
       alert("No se pudo enviar la nota.");
@@ -53,7 +50,6 @@ export default function MedicoDashboard({ userData }) {
         <h3>Tu Código de Médico</h3>
         <strong className="nurse-code-text">{userData.miCodigoMedico}</strong>
         
-        {/* SECCIÓN NUEVA: Panel de Comunicación */}
         <div style={{ marginTop: '1.5rem', borderTop: '1px solid #ddd', paddingTop: '1rem' }}>
           <h4>Enviar Indicación Médica</h4>
           <textarea 
@@ -88,7 +84,8 @@ export default function MedicoDashboard({ userData }) {
             <li key={r.id} className="medicamento-item">
               <div className="medicamento-info">
                 <strong>{r.pacienteEmail}</strong>
-                <span>{r.medicamento} ({r.hora})</span>
+                {/* MODIFICADO: Ahora muestra Medicamento, Dosis y Hora */}
+                <span>{r.medicamento} - <small>Dosis: {r.dosis || 'N/A'}</small> ({r.hora})</span>
                 <div className="info-subtext">
                   {new Date(r.fecha).toLocaleDateString()} - {new Date(r.fecha).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                 </div>

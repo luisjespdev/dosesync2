@@ -16,14 +16,14 @@ function App() {
   const [activeTab, setActiveTab] = useState('home');
 
   // Estados para el Modal Global de Alarma
+  // AÑADIDO: campo 'dosis' en el estado inicial
   const [showModal, setShowModal] = useState(false);
-  const [modalData, setModalData] = useState({ nombre: '', hora: '' });
+  const [modalData, setModalData] = useState({ nombre: '', hora: '', dosis: '' });
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
-        // Escuchar datos del usuario en tiempo real
         const userRef = ref(db, 'usuarios/' + currentUser.uid);
         onValue(userRef, (snapshot) => {
           const data = snapshot.val();
@@ -42,8 +42,9 @@ function App() {
     return () => unsubscribe();
   }, []);
 
-  const dispararAlarma = (nombre, hora) => {
-    setModalData({ nombre, hora });
+  // MODIFICADO: ahora recibe la dosis como parámetro
+  const dispararAlarma = (nombre, hora, dosis) => {
+    setModalData({ nombre, hora, dosis });
     setShowModal(true);
   };
 
@@ -53,9 +54,11 @@ function App() {
 
     try {
       const timestamp = new Date().toISOString();
+      // MODIFICADO: incluimos 'dosis' en el objeto que se guarda en Firebase
       const dataToma = {
         pacienteEmail: user.email,
         medicamento: modalData.nombre,
+        dosis: modalData.dosis || 'N/A', 
         hora: modalData.hora,
         estado: estado,
         fecha: timestamp
@@ -71,7 +74,7 @@ function App() {
         await set(push(reporteMedicoRef), dataToma);
       }
       
-      console.log(`DoseSync: Toma registrada - ${modalData.nombre}`);
+      console.log(`DoseSync: Toma registrada - ${modalData.nombre} (${modalData.dosis})`);
     } catch (error) {
       console.error("Error al registrar toma:", error);
       alert("Error al conectar con la base de datos.");
@@ -108,7 +111,7 @@ function App() {
         </section>
       </main>
 
-      {/* 2. MODAL CON ANIMACIÓN PROFESIONAL */}
+      {/* MODAL CON ANIMACIÓN PROFESIONAL */}
       <AnimatePresence>
         {showModal && (
           <div className="modal">
@@ -128,6 +131,9 @@ function App() {
               transition={{ type: "spring", stiffness: 260, damping: 20 }}
             >
               <p className="modal-titulo">Hora de tomar: <br/><strong>{modalData.nombre}</strong></p>
+              {/* MOSTRAR DOSIS EN EL MODAL */}
+              <p style={{ color: '#666', marginTop: '-10px', marginBottom: '15px' }}>Dosis: {modalData.dosis}</p>
+              
               <div className="modal-actions">
                 <button className="btn btn-success" onClick={() => registrarToma('tomado')}>✅ Tomado</button>
                 <button className="btn btn-danger" onClick={() => registrarToma('omitido')}>❌ Omitido</button>
