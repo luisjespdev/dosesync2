@@ -3,13 +3,8 @@ import { auth, db } from './firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { ref, onValue, push, set } from 'firebase/database';
 import { motion, AnimatePresence } from 'framer-motion';
-
-// IMPORTACIÓN DE ICONOS PROFESIONALES
 import { Home, Pill, ClipboardList, LogOut, Bell, CheckCircle2, XCircle } from 'lucide-react';
-
-// IMPORTACIÓN DEL LOGO (Optimizado para Vite/GitHub Pages)
-import logo from '/img/logo.png';
-
+import logo from './assets/logo.png';
 import Login from './components/login'; 
 import PacienteDashboard from './components/PacienteDashboard';
 import MedicoDashboard from './components/MedicoDashboard';
