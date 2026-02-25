@@ -39,6 +39,15 @@
 | **Iconografía** | Lucide React |
 | **Layout** | CSS3 (Custom Properties) - Mobile First |
 
+🔒 **Seguridad y Privacidad**
+DoseSync prioriza la integridad de los datos mediante una arquitectura de aislamiento por UID (Unique Identifier):
+
+Acceso Restringido: Solo el médico con el código de vinculación correcto tiene visibilidad sobre el paciente.
+
+Nodos Seguros: Las notas privadas se almacenan en rutas únicas (notasPrivadas/UID) para evitar fugas de información.
+
+Privacidad: Historiales persistentes y protegidos para el cumplimiento normativo de salud.
+
 ---
 
 ## 📂 Estructura del Proyecto
@@ -54,15 +63,7 @@ src/
 ├── App.jsx                    # Orquestador de rutas, lógica de alarmas y estado global
 └── main.jsx                   # Punto de entrada de la aplicación
 
-
-🔒 **Seguridad y Privacidad**
-DoseSync prioriza la integridad de los datos mediante una arquitectura de aislamiento por UID (Unique Identifier):
-
-Acceso Restringido: Solo el médico con el código de vinculación correcto tiene visibilidad sobre el paciente.
-
-Nodos Seguros: Las notas privadas se almacenan en rutas únicas (notasPrivadas/UID) para evitar fugas de información.
-
-Privacidad: Historiales persistentes y protegidos para el cumplimiento normativo de salud.
+---
 
 ⚙️ **Instalación y Configuración:**
 
