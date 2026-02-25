@@ -68,13 +68,7 @@ export default function Login() {
       <div className="login-card">
         <div className="logo-container small">
           {/* CAMBIO CLAVE: Usamos la variable {logo} en lugar de la ruta "/img/logo.png" */}
-          <img 
-            src={logo} 
-            alt="DoseSync Logo" 
-            className="logo-img small" 
-            width="80" 
-            height="54" 
-          />
+          <img src={logo} alt="DoseSync Logo" className="logo-img small" />
           <div className="logo small">DoseSync</div>
         </div>
         <h1>{isRegistering ? "Crear Cuenta" : "Iniciar sesión"}</h1>
