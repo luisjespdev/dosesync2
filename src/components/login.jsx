@@ -1,12 +1,17 @@
 import { useState } from 'react';
 import { auth, db } from '../firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
-import { ref, set } from 'firebase/database'; // Importaciones de Realtime Database
+import { ref, set } from 'firebase/database'; 
+
+// 1. IMPORTACIÓN DE ICONOS PARA EL LOGIN (Opcional, pero recomendado para mantener el estilo)
+import { User, Mail, Lock, Stethoscope } from 'lucide-react';
 
 export default function Login() {
   const [isRegistering, setIsRegistering] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  // NUEVO ESTADO: Nombre de usuario
+  const [nombreUsuario, setNombreUsuario] = useState('');
   const [rol, setRol] = useState('paciente');
   const [codigoMedico, setCodigoMedico] = useState('');
 
@@ -21,6 +26,12 @@ export default function Login() {
 
   const handleRegister = async (e) => {
     e.preventDefault();
+    
+    // VALIDACIONES MEJORADAS
+    if (isRegistering && !nombreUsuario.trim()) {
+      alert("Por favor, ingresa tu nombre completo.");
+      return;
+    }
     if (!email || password.length < 6) {
       alert("Ingresa un email válido y una contraseña de al menos 6 caracteres.");
       return;
@@ -34,24 +45,22 @@ export default function Login() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       
-      // Estructura de datos para Realtime Database
       let dataToSave = { 
+        nombreUsuario: nombreUsuario.trim(), // GUARDAMOS EL NOMBRE
         email: email, 
         rol: rol,
         uid: user.uid 
       };
 
       if (rol === 'enfermero') {
-        // Generamos el código único para el médico
         dataToSave.miCodigoMedico = "MED-" + Math.random().toString(36).substring(2, 6).toUpperCase();
       } else {
         dataToSave.codigoVinculado = codigoMedico.toUpperCase();
       }
 
-      // Guardamos en la ruta 'usuarios/id_del_usuario'
       await set(ref(db, 'usuarios/' + user.uid), dataToSave);
       
-      alert("¡Cuenta de EstarTech creada con éxito!");
+      alert(`¡Bienvenido a DoseSync, ${nombreUsuario}!`);
     } catch (error) {
       alert("Error al registrar: " + error.message);
     }
@@ -73,7 +82,25 @@ export default function Login() {
             <option value="enfermero">Enfermero / Médico</option>
           </select>
 
-          <label>Email</label>
+          {/* NUEVO CAMPO: NOMBRE DE USUARIO (Solo se muestra en registro) */}
+          {isRegistering && (
+            <>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <User size={14} /> Nombre Completo
+              </label>
+              <input 
+                type="text" 
+                value={nombreUsuario} 
+                onChange={(e) => setNombreUsuario(e.target.value)} 
+                required 
+                placeholder="Ej. Juan Pérez" 
+              />
+            </>
+          )}
+
+          <label style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <Mail size={14} /> Email
+          </label>
           <input 
             type="email" 
             value={email} 
@@ -82,7 +109,9 @@ export default function Login() {
             placeholder="tu@email.com" 
           />
           
-          <label>Contraseña</label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <Lock size={14} /> Contraseña
+          </label>
           <input 
             type="password" 
             value={password} 
@@ -93,7 +122,9 @@ export default function Login() {
           
           {rol === 'paciente' && isRegistering && (
             <div>
-              <label>Código de tu Médico</label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <Stethoscope size={14} /> Código de tu Médico
+              </label>
               <input 
                 type="text" 
                 value={codigoMedico} 

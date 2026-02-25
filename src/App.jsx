@@ -5,9 +5,9 @@ import { ref, onValue, push, set } from 'firebase/database';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // IMPORTACIÓN DE ICONOS PROFESIONALES
-import { Home, Pill, ClipboardList, LogOut, Bell } from 'lucide-react';
+import { Home, Pill, ClipboardList, LogOut, Bell, CheckCircle2, XCircle } from 'lucide-react';
 
-import Login from './components/Login'; 
+import Login from './components/login'; 
 import PacienteDashboard from './components/PacienteDashboard';
 import MedicoDashboard from './components/MedicoDashboard';
 
@@ -53,7 +53,10 @@ function App() {
 
     try {
       const timestamp = new Date().toISOString();
+      
       const dataToma = {
+        pacienteUID: user.uid,
+        pacienteNombre: userData?.nombreUsuario || "Usuario sin nombre", 
         pacienteEmail: user.email,
         medicamento: modalData.nombre,
         dosis: modalData.dosis || 'N/A', 
@@ -62,15 +65,17 @@ function App() {
         fecha: timestamp
       };
 
+      // 1. Guardar en el historial privado del Paciente
       const historialRef = ref(db, `historial/${user.uid}`);
       await set(push(historialRef), dataToma);
 
+      // 2. Enviar reporte al Médico vinculado
       if (userData?.codigoVinculado) {
         const reporteMedicoRef = ref(db, `reportesMedicos/${userData.codigoVinculado}`);
         await set(push(reporteMedicoRef), dataToma);
       }
       
-      console.log(`DoseSync: Toma registrada - ${modalData.nombre} (${modalData.dosis})`);
+      console.log(`DoseSync: Reporte enviado con UID: ${user.uid}`);
     } catch (error) {
       console.error("Error al registrar toma:", error);
       alert("Error al conectar con la base de datos.");
@@ -82,14 +87,9 @@ function App() {
 
   return (
     <div className="app-main">
-      {/* HEADER CON ESTILO MINIMALISTA */}
       <header className="app-header">
         <div className="logo-container header">
-          <img 
-            src="/img/logo.png" 
-            alt="DoseSync" 
-            className="logo-img header-profesional" 
-          />
+          <img src="/img/logo.png" alt="DoseSync" className="logo-img header-profesional" />
           <span className="logo-texto-minimalista">
             {userData?.rol === 'enfermero' ? 'Portal Médico' : 'DoseSync'}
           </span>
@@ -120,28 +120,33 @@ function App() {
       <AnimatePresence>
         {showModal && (
           <div className="modal">
+            <motion.div className="modal-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowModal(false)} />
             <motion.div 
-              className="modal-backdrop"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowModal(false)}
-            ></motion.div>
-
-            <motion.div 
-              className="modal-content"
-              initial={{ scale: 0.5, opacity: 0, y: 100 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.5, opacity: 0, y: 100 }}
+              className="modal-content" 
+              initial={{ scale: 0.5, opacity: 0, y: 100 }} 
+              animate={{ scale: 1, opacity: 1, y: 0 }} 
+              exit={{ scale: 0.5, opacity: 0, y: 100 }} 
               transition={{ type: "spring", stiffness: 260, damping: 20 }}
             >
-              <Bell size={40} color="#e74c3c" style={{ marginBottom: '10px' }} />
-              <p className="modal-titulo">Hora de tomar: <br/><strong>{modalData.nombre}</strong></p>
-              <p style={{ color: '#666', marginTop: '-10px', marginBottom: '15px' }}>Dosis: {modalData.dosis}</p>
+              <Bell size={48} color="#e74c3c" style={{ marginBottom: '15px' }} />
+              <p className="modal-titulo">Hora de la dosis: <br/><strong>{modalData.nombre}</strong></p>
+              <p style={{ color: '#666', marginTop: '-10px', marginBottom: '20px' }}>Dosis: {modalData.dosis}</p>
               
-              <div className="modal-actions">
-                <button className="btn btn-success" onClick={() => registrarToma('tomado')}>✅ Tomado</button>
-                <button className="btn btn-danger" onClick={() => registrarToma('omitido')}>❌ Omitido</button>
+              <div className="modal-actions" style={{ display: 'flex', gap: '10px', width: '100%' }}>
+                <button 
+                  className="btn btn-success" 
+                  onClick={() => registrarToma('tomado')} 
+                  style={{ background: '#2ecc71', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                >
+                  <CheckCircle2 size={18} /> Tomado
+                </button>
+                <button 
+                  className="btn btn-danger" 
+                  onClick={() => registrarToma('omitido')} 
+                  style={{ background: '#e74c3c', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                >
+                  <XCircle size={18} /> Omitido
+                </button>
               </div>
             </motion.div>
           </div>
@@ -151,16 +156,13 @@ function App() {
       {userData?.rol === 'paciente' && (
         <nav className="bottom-nav">
           <button className={`nav-item ${activeTab === 'home' ? 'active' : ''}`} onClick={() => setActiveTab('home')}>
-            <Home size={22} className="nav-icon" />
-            <span className="nav-label">Inicio</span>
+            <Home size={22} className="nav-icon" /><span className="nav-label">Inicio</span>
           </button>
           <button className={`nav-item ${activeTab === 'recordatorios' ? 'active' : ''}`} onClick={() => setActiveTab('recordatorios')}>
-            <Pill size={22} className="nav-icon" />
-            <span className="nav-label">Recordatorios</span>
+            <Pill size={22} className="nav-icon" /><span className="nav-label">Recordatorios</span>
           </button>
           <button className={`nav-item ${activeTab === 'historial' ? 'active' : ''}`} onClick={() => setActiveTab('historial')}>
-            <ClipboardList size={22} className="nav-icon" />
-            <span className="nav-label">Historial</span>
+            <ClipboardList size={22} className="nav-icon" /><span className="nav-label">Historial</span>
           </button>
         </nav>
       )}
