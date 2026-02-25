@@ -66,11 +66,17 @@ export default function Login() {
   return (
     <section className="login-section">
       <div className="login-card">
-        <div className="logo-container small">
-          {/* CAMBIO CLAVE: Usamos la variable {logo} en lugar de la ruta "/img/logo.png" */}
-          <img src={logo} alt="DoseSync Logo" className="logo-img small" />
-          <div className="logo small">DoseSync</div>
-        </div>
+      <div className="logo-container small">
+  {/* 2. El src DEBE ir entre llaves {logo} y SIN comillas */}
+  <img 
+    src={logo} 
+    alt="DoseSync Logo" 
+    className="logo-img small" 
+    width="80" 
+    height="54" 
+  />
+  <div className="logo small">DoseSync</div>
+</div>
         <h1>{isRegistering ? "Crear Cuenta" : "Iniciar sesión"}</h1>
         
         <form className="form" onSubmit={isRegistering ? handleRegister : handleLogin}>
