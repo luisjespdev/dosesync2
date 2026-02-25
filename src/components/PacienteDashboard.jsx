@@ -22,8 +22,13 @@ export default function PacienteDashboard({ userData, activeTab, dispararAlarma 
     "Mantener una rutina fija mejora la efectividad de tu tratamiento en un 40%.",
     "¿Sabías que algunos alimentos pueden interferir con tus medicinas? Consulta siempre a tu médico.",
     "Guardar tus medicamentos en un lugar fresco y seco ayuda a mantener su potencia.",
-    "DoseSync te ayuda a mantener el control, pero tu constancia es la clave del éxito."
-  ];
+    "DoseSync te ayuda a mantener el control, pero tu constancia es la clave del éxito.", 
+    "Nunca compartas tus medicamentos con otras personas, cada tratamiento es único.", 
+    "Si olvidas una dosis, no tomes el doble en la siguiente toma sin consultar a tu médico.", 
+    "Poner una alarma diaria a la misma hora ayuda a crear un hábito saludable.", 
+    "Verifica siempre la fecha de vencimiento antes de iniciar un nuevo frasco.", 
+    "Hacer ejercicio ligero mejora la circulación y ayuda a la efectividad de algunos tratamientos."
+];
 
   // EFECTO: Notas Médicas Privadas e Individuales
   useEffect(() => {
