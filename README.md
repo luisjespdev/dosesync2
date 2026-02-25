@@ -45,13 +45,13 @@ Permite que los pacientes reciban alertas precisas sobre sus medicamentos, mient
 ## 🛠️ Stack Tecnológico
 
 | Capa | Tecnología |
-|------|------------|
-| Frontend | React.js (v19) + Vite |
-| Backend / DB | Firebase Realtime Database (NoSQL) |
-| Autenticación | Firebase Authentication |
-| Animaciones | Framer Motion |
-| Iconos | Lucide React |
-| Diseño | CSS3 (Mobile First) |
+| :--- | :--- |
+| **Frontend** | React.js (v19) + Vite |
+| **Backend/DB** | Firebase Realtime Database (NoSQL) |
+| **Auth** | Firebase Authentication |
+| **Animaciones** | Framer Motion |
+| **Iconografía** | Lucide React |
+| **Layout** | CSS3 (Custom Properties) - Mobile First |
 
 ---
 
@@ -60,36 +60,35 @@ Permite que los pacientes reciban alertas precisas sobre sus medicamentos, mient
 ```bash
 src/
 ├── components/
-│   ├── login.jsx
-│   ├── PacienteDashboard.jsx
-│   ├── MedicoDashboard.jsx
-│   └── FormularioMedicamento.jsx
-├── firebase.js
-├── App.jsx
-└── main.jsx
-```
+│   ├── login.jsx              # Gestión de acceso, registro y roles
+│   ├── PacienteDashboard.jsx   # Vista de usuario, alarmas y consejos dinámicos
+│   ├── MedicoDashboard.jsx     # Panel de auditoría médica y mensajería
+│   └── FormularioMedicamento.jsx # Gestión de tratamientos (CRUD)
+├── firebase.js                # Configuración central del SDK de Firebase
+├── App.jsx                    # Orquestador de rutas, lógica de alarmas y estado global
+└── main.jsx                   # Punto de entrada de la aplicación
 
----
 
-## 🔒 Seguridad y Privacidad
+🔒 **Seguridad y Privacidad**
+DoseSync prioriza la integridad de los datos mediante una arquitectura de aislamiento por UID (Unique Identifier):
 
-- 🔐 Aislamiento por UID (Unique Identifier).  
-- 👨‍⚕️ Acceso restringido solo al médico vinculado.  
-- 📁 Notas privadas en rutas únicas:  
-  `notasPrivadas/UID`  
-- 📜 Historiales persistentes y protegidos.
+Acceso Restringido: Solo el médico con el código de vinculación correcto tiene visibilidad sobre el paciente.
 
----
+Nodos Seguros: Las notas privadas se almacenan en rutas únicas (notasPrivadas/UID) para evitar fugas de información.
 
-## ⚙️ Instalación
+Privacidad: Historiales persistentes y protegidos para el cumplimiento normativo de salud.
 
-### 1️⃣ Clonar repositorio
-```bash
-git clone https://github.com/luisjespdev/dosesync2.git
-```
+⚙️ **Instalación y Configuración:**
 
-### 2️⃣ Instalar dependencias
-```bash
+Sigue estos pasos para ejecutar el proyecto localmente:
+
+Clonación del repositorio
+
+git clone [https://github.com/luisjespdev/dosesync2.git](https://github.com/luisjespdev/dosesync2.git)
+
+
+**Instalación de dependencias:**
+
 npm install
 ```
 
