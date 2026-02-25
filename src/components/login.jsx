@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { auth, db } from '../firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { ref, set } from 'firebase/database';
+import logo from '/public/img/logo.png';
 
 // IMPORTACIÓN CORRECTA: Vite procesará esta imagen para que funcione en GitHub Pages
 import logo from '/public/img/logo.png'; 

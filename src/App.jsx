@@ -7,6 +7,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 // IMPORTACIÓN DE ICONOS PROFESIONALES
 import { Home, Pill, ClipboardList, LogOut, Bell, CheckCircle2, XCircle } from 'lucide-react';
 
+// IMPORTACIÓN DEL LOGO (Optimizado para Vite/GitHub Pages)
+import logo from '/img/logo.png';
+
 import Login from './components/login'; 
 import PacienteDashboard from './components/PacienteDashboard';
 import MedicoDashboard from './components/MedicoDashboard';
@@ -65,11 +68,9 @@ function App() {
         fecha: timestamp
       };
 
-      // 1. Guardar en el historial privado del Paciente
       const historialRef = ref(db, `historial/${user.uid}`);
       await set(push(historialRef), dataToma);
 
-      // 2. Enviar reporte al Médico vinculado
       if (userData?.codigoVinculado) {
         const reporteMedicoRef = ref(db, `reportesMedicos/${userData.codigoVinculado}`);
         await set(push(reporteMedicoRef), dataToma);
@@ -89,7 +90,8 @@ function App() {
     <div className="app-main">
       <header className="app-header">
         <div className="logo-container header">
-          <img src="/img/logo.png" alt="DoseSync" className="logo-img header-profesional" />
+          {/* USANDO LA VARIABLE IMPORTADA CON LLAVES */}
+          <img src={logo} alt="DoseSync" className="logo-img header-profesional" />
           <span className="logo-texto-minimalista">
             {userData?.rol === 'enfermero' ? 'Portal Médico' : 'DoseSync'}
           </span>
