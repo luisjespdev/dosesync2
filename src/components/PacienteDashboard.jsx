@@ -214,6 +214,13 @@ export default function PacienteDashboard({ userData, activeTab, dispararAlarma 
                     <div style={{ textAlign: 'left' }}>
                       <strong style={{ fontSize: '1rem' }}>{h.medicamento}</strong><br/>
                       <small style={{ color: '#444', fontWeight: 'bold' }}>Dosis: {h.dosis || 'N/A'}</small><br/>
+                      
+                      {h.motivoOmision && (
+                        <small style={{ display: 'block', color: '#d35400', backgroundColor: '#fdf2e9', padding: '2px 5px', borderRadius: '4px', marginTop: '2px', fontStyle: 'italic' }}>
+                          Nota: {h.motivoOmision}
+                        </small>
+                      )}
+                      
                       <small style={{ color: '#888' }}>
                         <Clock size={12} style={{ verticalAlign: 'middle', marginRight: '3px' }} />
                         {h.hora} - {new Date(h.fecha).toLocaleDateString()}
@@ -244,3 +251,4 @@ export default function PacienteDashboard({ userData, activeTab, dispararAlarma 
     </div>
   );
 }
+

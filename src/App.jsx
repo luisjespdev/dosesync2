@@ -46,6 +46,19 @@ function App() {
   };
 
   const registrarToma = async (estado) => {
+    let motivoOmision = null;
+
+    // Lógica para capturar el motivo si la dosis es omitida
+    if (estado === 'omitido') {
+      const respuesta = prompt("¿Por qué omites esta dosis? Tu médico recibirá esta nota:");
+      if (respuesta === null) return; // Si cancela el prompt, no cerramos el modal ni registramos
+      if (respuesta.trim() === "") {
+        alert("Es obligatorio dar una razón para omitir la dosis.");
+        return;
+      }
+      motivoOmision = respuesta;
+    }
+
     setShowModal(false);
     if (!user) return;
 
@@ -60,7 +73,8 @@ function App() {
         dosis: modalData.dosis || 'N/A', 
         hora: modalData.hora,
         estado: estado,
-        fecha: timestamp
+        fecha: timestamp,
+        motivoOmision: motivoOmision // Se guarda la nota para el médico
       };
 
       const historialRef = ref(db, `historial/${user.uid}`);
@@ -71,7 +85,7 @@ function App() {
         await set(push(reporteMedicoRef), dataToma);
       }
       
-      console.log(`DoseSync: Reporte enviado con UID: ${user.uid}`);
+      console.log(`DoseSync: Reporte enviado con motivo: ${motivoOmision || 'N/A'}`);
     } catch (error) {
       console.error("Error al registrar toma:", error);
       alert("Error al conectar con la base de datos.");
@@ -85,7 +99,6 @@ function App() {
     <div className="app-main">
       <header className="app-header">
         <div className="logo-container header">
-          {/* USANDO LA VARIABLE IMPORTADA CON LLAVES */}
           <img src={logo} alt="DoseSync" className="logo-img header-profesional" />
           <span className="logo-texto-minimalista">
             {userData?.rol === 'enfermero' ? 'Portal Médico' : 'DoseSync'}

@@ -37,10 +37,9 @@ export default function MedicoDashboard({ userData }) {
           ...data[key]
         }));
 
-        // --- AGRUPACIÓN POR UID DEL PACIENTE ---
         const agrupados = listaRaw.reduce((acc, curr) => {
           const uid = curr.pacienteUID;
-          if (!uid) return acc; // Ignorar reportes sin UID (antiguos)
+          if (!uid) return acc; 
 
           if (!acc[uid]) {
             acc[uid] = {
@@ -53,21 +52,19 @@ export default function MedicoDashboard({ userData }) {
           return acc;
         }, {});
 
-        // Ordenar tomas por fecha descendente
         Object.keys(agrupados).forEach(uid => {
           agrupados[uid].tomas.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
         });
 
         setReportesAgrupados(agrupados);
 
-        // --- ESCUCHAR ESTADO DE CADA NOTA PRIVADA ---
         Object.keys(agrupados).forEach(uid => {
           const notaRef = ref(db, `notasPrivadas/${uid}`);
           onValue(notaRef, (notaSnap) => {
             const notaData = notaSnap.val();
             setDatosNotas(prev => ({
               ...prev,
-              [uid]: notaData ? notaData : { leida: true } // Si no hay nota, se considera "al día"
+              [uid]: notaData ? notaData : { leida: true } 
             }));
           });
         });
@@ -88,7 +85,7 @@ export default function MedicoDashboard({ userData }) {
         mensaje: texto,
         fechaEnvio: new Date().toISOString(),
         leida: false,
-        fechaLectura: null // Se resetea al enviar nueva indicación
+        fechaLectura: null 
       });
       alert(`Nota enviada a ${nombre}`);
       setNotasPorPaciente(prev => ({ ...prev, [uid]: "" }));
@@ -118,7 +115,6 @@ export default function MedicoDashboard({ userData }) {
           Object.keys(reportesAgrupados).map(uid => (
             <div key={uid} style={{ marginBottom: '10px', textAlign: 'left' }}>
               
-              {/* CABECERA DEL PACIENTE */}
               <div 
                 onClick={() => setPacienteAbierto(pacienteAbierto === uid ? null : uid)} 
                 style={{ 
@@ -158,11 +154,9 @@ export default function MedicoDashboard({ userData }) {
                 </div>
               </div>
 
-              {/* CUERPO DEL PACIENTE (ACORDEÓN) */}
               {pacienteAbierto === uid && (
                 <div style={{ background: '#fcfcfc', border: '1px solid #eee', borderTop: 'none', borderRadius: '0 0 12px 12px', padding: '15px' }}>
                   
-                  {/* SECCIÓN ENVIAR NOTA */}
                   <div style={{ marginBottom: '20px', padding: '10px', background: '#fff', borderRadius: '8px', border: '1px solid #eee' }}>
                     <h5 style={{ color: '#2ecc71', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '5px' }}>
                       <MessageSquare size={14} /> Nueva indicación para {reportesAgrupados[uid].nombre}:
@@ -187,34 +181,51 @@ export default function MedicoDashboard({ userData }) {
                     {reportesAgrupados[uid].tomas.map(r => (
                       <div key={r.id} style={{ 
                         display: 'flex', 
-                        justifyContent: 'space-between', 
-                        alignItems: 'center',
+                        flexDirection: 'column', // Cambiado a columna para acomodar mejor la nota
                         padding: '10px', 
                         background: 'white',
                         borderRadius: '8px',
                         border: '1px solid #f0f0f0'
                       }}>
-                        <div style={{ fontSize: '0.9rem' }}>
-                          <strong style={{ display: 'block', color: '#2c3e50' }}>{r.medicamento}</strong> 
-                          <div style={{ color: '#666', fontSize: '0.8rem', marginTop: '2px' }}>
-                            <span style={{ fontWeight: '600' }}>Dosis: {r.dosis || 'N/A'}</span> <br/>
-                            <Clock size={12} style={{ verticalAlign: 'middle' }} /> {r.hora} - {new Date(r.fecha).toLocaleDateString()}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                          <div style={{ fontSize: '0.9rem' }}>
+                            <strong style={{ display: 'block', color: '#2c3e50' }}>{r.medicamento}</strong> 
+                            <div style={{ color: '#666', fontSize: '0.8rem', marginTop: '2px' }}>
+                              <span style={{ fontWeight: '600' }}>Dosis: {r.dosis || 'N/A'}</span> <br/>
+                              <Clock size={12} style={{ verticalAlign: 'middle' }} /> {r.hora} - {new Date(r.fecha).toLocaleDateString()}
+                            </div>
+                          </div>
+                          
+                          <div style={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: '5px', 
+                            fontWeight: 'bold',
+                            color: r.estado === 'tomado' ? '#2ecc71' : '#e74c3c' 
+                          }}>
+                            {r.estado === 'tomado' ? (
+                              <><CheckCircle2 size={18} /> Tomado</>
+                            ) : (
+                              <><XCircle size={18} /> Omitido</>
+                            )}
                           </div>
                         </div>
-                        
-                        <div style={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          gap: '5px', 
-                          fontWeight: 'bold',
-                          color: r.estado === 'tomado' ? '#2ecc71' : '#e74c3c' 
-                        }}>
-                          {r.estado === 'tomado' ? (
-                            <><CheckCircle2 size={18} /> Tomado</>
-                          ) : (
-                            <><XCircle size={18} /> Omitido</>
-                          )}
-                        </div>
+
+                        {/* BLOQUE DE LA NOTA DEL PACIENTE */}
+                        {r.motivoOmision && (
+                          <div style={{ 
+                            marginTop: '8px', 
+                            padding: '8px', 
+                            backgroundColor: '#fff5e6', 
+                            borderLeft: '4px solid #ff9800', 
+                            borderRadius: '4px',
+                            fontSize: '0.85rem',
+                            color: '#855c33'
+                          }}>
+                            <strong style={{ display: 'block', marginBottom: '2px', color: '#e67e22' }}>Nota del paciente:</strong>
+                            "{r.motivoOmision}"
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
