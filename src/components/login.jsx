@@ -1,16 +1,17 @@
 import { useState } from 'react';
 import { auth, db } from '../firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
-import { ref, set } from 'firebase/database'; 
+import { ref, set } from 'firebase/database';
 
-// 1. IMPORTACIÓN DE ICONOS PARA EL LOGIN (Opcional, pero recomendado para mantener el estilo)
+// IMPORTACIÓN CORRECTA: Vite procesará esta imagen para que funcione en GitHub Pages
+import logo from '/public/img/logo.png'; 
+
 import { User, Mail, Lock, Stethoscope } from 'lucide-react';
 
 export default function Login() {
   const [isRegistering, setIsRegistering] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  // NUEVO ESTADO: Nombre de usuario
   const [nombreUsuario, setNombreUsuario] = useState('');
   const [rol, setRol] = useState('paciente');
   const [codigoMedico, setCodigoMedico] = useState('');
@@ -27,7 +28,6 @@ export default function Login() {
   const handleRegister = async (e) => {
     e.preventDefault();
     
-    // VALIDACIONES MEJORADAS
     if (isRegistering && !nombreUsuario.trim()) {
       alert("Por favor, ingresa tu nombre completo.");
       return;
@@ -46,7 +46,7 @@ export default function Login() {
       const user = userCredential.user;
       
       let dataToSave = { 
-        nombreUsuario: nombreUsuario.trim(), // GUARDAMOS EL NOMBRE
+        nombreUsuario: nombreUsuario.trim(),
         email: email, 
         rol: rol,
         uid: user.uid 
@@ -70,7 +70,14 @@ export default function Login() {
     <section className="login-section">
       <div className="login-card">
         <div className="logo-container small">
-          <img src="/img/logo.png" alt="DoseSync Logo" className="logo-img small" width="80" height="54" />
+          {/* CAMBIO CLAVE: Usamos la variable {logo} en lugar de la ruta "/img/logo.png" */}
+          <img 
+            src={logo} 
+            alt="DoseSync Logo" 
+            className="logo-img small" 
+            width="80" 
+            height="54" 
+          />
           <div className="logo small">DoseSync</div>
         </div>
         <h1>{isRegistering ? "Crear Cuenta" : "Iniciar sesión"}</h1>
@@ -82,7 +89,6 @@ export default function Login() {
             <option value="enfermero">Enfermero / Médico</option>
           </select>
 
-          {/* NUEVO CAMPO: NOMBRE DE USUARIO (Solo se muestra en registro) */}
           {isRegistering && (
             <>
               <label style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
