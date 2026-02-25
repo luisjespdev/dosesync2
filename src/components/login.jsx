@@ -71,9 +71,7 @@ export default function Login() {
   <img 
     src={logo} 
     alt="DoseSync Logo" 
-    className="logo-img small" 
-    width="80" 
-    height="54" 
+    className="logo-img small"  
   />
   <div className="logo small">DoseSync</div>
 </div>
