@@ -45,20 +45,22 @@ function App() {
     setShowModal(true);
   };
 
-  const registrarToma = async (estado) => {
-    let motivoOmision = null;
-
-    // Lógica para capturar el motivo si la dosis es omitida
-    if (estado === 'omitido') {
-      const respuesta = prompt("¿Por qué omites esta dosis? Tu médico recibirá esta nota:");
-      if (respuesta === null) return; // Si cancela el prompt, no cerramos el modal ni registramos
-      if (respuesta.trim() === "") {
-        alert("Es obligatorio dar una razón para omitir la dosis.");
-        return;
-      }
-      motivoOmision = respuesta;
+  // NUEVA FUNCIÓN: Maneja el clic de "Omitir" de forma síncrona para que el prompt no falle
+  const handleOmitirClic = () => {
+    const motivo = prompt("¿Por qué omites esta dosis? Tu médico recibirá esta nota:");
+    
+    if (motivo === null) return; // Si cancela el prompt, no hacemos nada
+    if (motivo.trim() === "") {
+      alert("Es obligatorio dar una razón para omitir la dosis.");
+      return;
     }
+    
+    // Si todo está bien, llamamos a la función de guardado
+    registrarToma('omitido', motivo);
+  };
 
+  // FUNCIÓN MODIFICADA: Ahora recibe el estado y el motivo (si existe)
+  const registrarToma = async (estado, motivo = null) => {
     setShowModal(false);
     if (!user) return;
 
@@ -74,7 +76,7 @@ function App() {
         hora: modalData.hora,
         estado: estado,
         fecha: timestamp,
-        motivoOmision: motivoOmision // Se guarda la nota para el médico
+        motivoOmision: motivo // Se guarda la nota para el médico, será null si se tomó
       };
 
       const historialRef = ref(db, `historial/${user.uid}`);
@@ -85,7 +87,7 @@ function App() {
         await set(push(reporteMedicoRef), dataToma);
       }
       
-      console.log(`DoseSync: Reporte enviado con motivo: ${motivoOmision || 'N/A'}`);
+      console.log(`DoseSync: Reporte enviado con motivo: ${motivo || 'N/A'}`);
     } catch (error) {
       console.error("Error al registrar toma:", error);
       alert("Error al conectar con la base de datos.");
@@ -152,7 +154,7 @@ function App() {
                 </button>
                 <button 
                   className="btn btn-danger" 
-                  onClick={() => registrarToma('omitido')} 
+                  onClick={handleOmitirClic} // AQUI LLAMAMOS A LA NUEVA FUNCIÓN
                   style={{ background: '#e74c3c', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                 >
                   <XCircle size={18} /> Omitido
