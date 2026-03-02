@@ -49,10 +49,11 @@ function App() {
         setUser(currentUser);
         const userRef = ref(db, 'usuarios/' + currentUser.uid);
         
-        // Usamos onValue con manejo de nulidad para evitar bloqueos en carga
         onValue(userRef, (snapshot) => {
           const data = snapshot.val();
-          setUserData(data || { rol: 'paciente', nombreUsuario: 'Usuario' });
+          // SEGURIDAD: Ya no asignamos "paciente" por defecto. 
+          // Guardamos exactamente lo que diga la base de datos.
+          setUserData(data); 
           setLoading(false);
         });
       } else {
@@ -70,7 +71,6 @@ function App() {
     setModalData({ nombre, hora, dosis });
     setShowModal(true);
     
-    // Si la app está abierta, vibramos (vibración nativa simple)
     if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
   };
 
@@ -91,7 +91,6 @@ function App() {
         fecha: timestamp
       };
 
-      // Guardar en Firebase
       const historialRef = ref(db, `historial/${user.uid}`);
       await set(push(historialRef), dataToma);
 
@@ -138,15 +137,21 @@ function App() {
       <main className="screens">
         <section className="screen active">
           <div className="screen-inner">
+            {/* RENDERIZADO ESTRICTO CONDICIONADO AL ROL */}
             {userData?.rol === 'enfermero' ? (
               <MedicoDashboard userData={userData} />
-            ) : (
+            ) : userData?.rol === 'paciente' ? (
               <PacienteDashboard
                 userData={userData}
                 activeTab={activeTab}
                 dispararAlarma={dispararAlarma}
                 setActiveTab={setActiveTab}
               />
+            ) : (
+              <div style={{ textAlign: 'center', padding: '2rem', color: '#666' }}>
+                <h3>Verificando acceso...</h3>
+                <p>Si esta pantalla no desaparece, es posible que tu cuenta no tenga un rol asignado correctamente.</p>
+              </div>
             )}
           </div>
         </section>
@@ -197,6 +202,7 @@ function App() {
         )}
       </AnimatePresence>
 
+      {/* MENÚ INFERIOR SOLO VISIBLE PARA PACIENTES */}
       {userData?.rol === 'paciente' && (
         <nav className="bottom-nav">
           <button className={`nav-item ${activeTab === 'home' ? 'active' : ''}`} onClick={() => setActiveTab('home')}>

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { auth, db } from '../firebase';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
-import { ref, set } from 'firebase/database';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
+import { ref, set, get } from 'firebase/database';
 import logo from '../assets/logo.png';
 import { User, Mail, Lock, Stethoscope } from 'lucide-react';
 
@@ -16,7 +16,26 @@ export default function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // VALIDACIÓN DE SEGURIDAD: Verificar que el rol seleccionado coincide con el real
+      const snapshot = await get(ref(db, `usuarios/${user.uid}`));
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        
+        if (data.rol !== rol) {
+          // Si el rol no coincide, bloqueamos el acceso y cerramos la sesión
+          alert(`Acceso denegado: Esta cuenta pertenece a un ${data.rol === 'enfermero' ? 'Médico/Enfermero' : 'Paciente'}. Por favor, selecciona el rol correcto arriba para entrar.`);
+          await signOut(auth);
+          return;
+        }
+      } else {
+        alert("Error: Perfil de usuario no encontrado en la base de datos.");
+        await signOut(auth);
+        return;
+      }
+      
     } catch (error) {
       alert("Error: Verifica tu correo o contraseña.");
     }
@@ -66,15 +85,14 @@ export default function Login() {
   return (
     <section className="login-section">
       <div className="login-card">
-      <div className="logo-container small">
-  {/* 2. El src DEBE ir entre llaves {logo} y SIN comillas */}
-  <img 
-    src={logo} 
-    alt="DoseSync Logo" 
-    className="logo-img small"  
-  />
-  <div className="logo small">DoseSync</div>
-</div>
+        <div className="logo-container small">
+          <img 
+            src={logo} 
+            alt="DoseSync Logo" 
+            className="logo-img small"  
+          />
+          <div className="logo small">DoseSync</div>
+        </div>
         <h1>{isRegistering ? "Crear Cuenta" : "Iniciar sesión"}</h1>
         
         <form className="form" onSubmit={isRegistering ? handleRegister : handleLogin}>

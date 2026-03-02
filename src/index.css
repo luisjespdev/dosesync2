@@ -665,3 +665,75 @@ body {
   background: var(--color-danger);
   transform: translateY(-1px);
 }
+
+/* ============================================================
+   DISEÑO PROFESIONAL PARA ANDROID (PANTALLAS < 768px)
+   ============================================================ */
+   @media (max-width: 768px) {
+  
+    /* 1. Header: Logo arriba y Botón abajo, ambos centrados */
+    .app-header {
+      display: flex;
+      flex-direction: column !important; /* Forzamos el apilamiento */
+      height: auto !important;
+      min-height: 110px;
+      padding: 15px 1rem !important;
+      justify-content: center;
+      gap: 12px;
+    }
+  
+    .logo-container.header {
+      position: static !important;
+      margin: 0 auto !important;
+      display: flex;
+      justify-content: center;
+      width: 100%;
+    }
+  
+    .logo-img.header-profesional {
+      height: 38px !important; /* Un poco más pequeño para ahorrar espacio vertical */
+    }
+  
+    /* 2. Centralización del botón "Salir" */
+    .header-btn-right {
+      position: static !important; /* IMPORTANTE: Quitamos el absolute que lo mandaba a la derecha */
+      margin: 0 auto !important;
+      width: fit-content;
+      padding: 8px 20px !important;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  
+    /* 3. Simetría total en el contenido */
+    .screen {
+      padding: 1rem 1rem 80px !important; /* Espacio para que el nav inferior no tape contenido */
+    }
+  
+    .screen-inner {
+      max-width: 100% !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+  
+    /* 4. Tarjetas estandarizadas */
+    .curiosidad-card, 
+    .medicamento-item, 
+    .historial-item,
+    .form-card {
+      width: 100% !important;
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+      box-sizing: border-box;
+      border-radius: 12px !important;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05) !important;
+    }
+  
+    /* 5. Títulos del Dashboard centrados */
+    .welcome-title, .screen h2 {
+      text-align: center !important;
+      width: 100%;
+      margin-top: 10px;
+    }
+  }
