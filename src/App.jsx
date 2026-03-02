@@ -5,6 +5,9 @@ import { auth, db } from './firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { ref, onValue, push, set } from 'firebase/database';
 
+// Capacitor (Para notificaciones nativas con el móvil cerrado)
+import { LocalNotifications } from '@capacitor/local-notifications';
+
 // UI & Animaciones
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -19,26 +22,37 @@ import PacienteDashboard from './components/PacienteDashboard';
 import MedicoDashboard from './components/MedicoDashboard';
 
 function App() {
-  // --- Estados de Autenticación y Carga ---
+  // --- Estados ---
   const [user, setUser] = useState(null);
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
-
-  // --- Estados de Navegación y UI ---
   const [activeTab, setActiveTab] = useState('home');
   const [showModal, setShowModal] = useState(false);
   const [modalData, setModalData] = useState({ nombre: '', hora: '', dosis: '' });
 
-  // --- Manejo de Sesión y Datos de Usuario ---
+  // --- 1. Inicialización de Permisos Nativa ---
+  useEffect(() => {
+    const initNativeHardware = async () => {
+      try {
+        await LocalNotifications.requestPermissions();
+      } catch (e) {
+        console.warn("DoseSync: Permisos de notificación no disponibles en web pura.");
+      }
+    };
+    initNativeHardware();
+  }, []);
+
+  // --- 2. Manejo de Sesión y Datos ---
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
         const userRef = ref(db, 'usuarios/' + currentUser.uid);
         
+        // Usamos onValue con manejo de nulidad para evitar bloqueos en carga
         onValue(userRef, (snapshot) => {
           const data = snapshot.val();
-          if (data) setUserData(data);
+          setUserData(data || { rol: 'paciente', nombreUsuario: 'Usuario' });
           setLoading(false);
         });
       } else {
@@ -51,10 +65,13 @@ function App() {
     return () => unsubscribe();
   }, []);
 
-  // --- Lógica de Alarmas y Registro ---
+  // --- 3. Lógica de Alarmas y Registro ---
   const dispararAlarma = (nombre, hora, dosis) => {
     setModalData({ nombre, hora, dosis });
     setShowModal(true);
+    
+    // Si la app está abierta, vibramos (vibración nativa simple)
+    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
   };
 
   const registrarToma = async (estado) => {
@@ -74,11 +91,10 @@ function App() {
         fecha: timestamp
       };
 
-      // Guardar en el historial personal
+      // Guardar en Firebase
       const historialRef = ref(db, `historial/${user.uid}`);
       await set(push(historialRef), dataToma);
 
-      // Si está vinculado a un médico, enviar reporte
       if (userData?.codigoVinculado) {
         const reporteMedicoRef = ref(db, `reportesMedicos/${userData.codigoVinculado}`);
         await set(push(reporteMedicoRef), dataToma);
@@ -87,24 +103,25 @@ function App() {
       console.log(`DoseSync: Registro completado para ${user.uid}`);
     } catch (error) {
       console.error("Error al registrar toma:", error);
-      alert("Error al conectar con la base de datos.");
     }
   };
 
-  // --- Renderizado Condicional de Carga y Login ---
-  if (loading) {
-    return (
-      <div className="loading-screen">
-        <h2>Cargando DoseSync...</h2>
-      </div>
-    );
-  }
+  // --- Renderizado ---
+  if (loading) return (
+    <div className="loading-screen">
+      <motion.h2 
+        animate={{ opacity: [0.5, 1, 0.5] }} 
+        transition={{ repeat: Infinity, duration: 2 }}
+      >
+        Cargando DoseSync...
+      </motion.h2>
+    </div>
+  );
 
   if (!user) return <Login />;
 
   return (
     <div className="app-main">
-      {/* Header Principal */}
       <header className="app-header">
         <div className="logo-container header">
           <img src={logo} alt="DoseSync" className="logo-img header-profesional" />
@@ -113,15 +130,11 @@ function App() {
           </span>
         </div>
 
-        <button 
-          onClick={() => auth.signOut()} 
-          className="btn btn-sm btn-danger header-btn-right"
-        >
+        <button onClick={() => auth.signOut()} className="btn btn-sm btn-danger header-btn-right">
           <LogOut size={16} style={{ marginRight: '5px' }} /> Salir
         </button>
       </header>
 
-      {/* Contenido Principal */}
       <main className="screens">
         <section className="screen active">
           <div className="screen-inner">
@@ -139,7 +152,6 @@ function App() {
         </section>
       </main>
 
-      {/* Modal de Alerta de Medicamento */}
       <AnimatePresence>
         {showModal && (
           <div className="modal">
@@ -152,12 +164,11 @@ function App() {
             />
             <motion.div
               className="modal-content"
-              initial={{ scale: 0.5, opacity: 0, y: 100 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.5, opacity: 0, y: 100 }}
-              transition={{ type: "spring", stiffness: 260, damping: 20 }}
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
             >
-              <Bell size={48} color="#e74c3c" style={{ marginBottom: '15px' }} />
+              <Bell size={48} color="#e74c3c" className="animate-bounce" />
               <p className="modal-titulo">
                 Hora de la dosis: <br/><strong>{modalData.nombre}</strong>
               </p>
@@ -186,29 +197,16 @@ function App() {
         )}
       </AnimatePresence>
 
-      {/* Navegación Inferior (Solo Pacientes) */}
       {userData?.rol === 'paciente' && (
         <nav className="bottom-nav">
-          <button 
-            className={`nav-item ${activeTab === 'home' ? 'active' : ''}`} 
-            onClick={() => setActiveTab('home')}
-          >
-            <Home size={22} className="nav-icon" />
-            <span className="nav-label">Inicio</span>
+          <button className={`nav-item ${activeTab === 'home' ? 'active' : ''}`} onClick={() => setActiveTab('home')}>
+            <Home size={22} /><span className="nav-label">Inicio</span>
           </button>
-          <button 
-            className={`nav-item ${activeTab === 'recordatorios' ? 'active' : ''}`} 
-            onClick={() => setActiveTab('recordatorios')}
-          >
-            <Pill size={22} className="nav-icon" />
-            <span className="nav-label">Recordatorios</span>
+          <button className={`nav-item ${activeTab === 'recordatorios' ? 'active' : ''}`} onClick={() => setActiveTab('recordatorios')}>
+            <Pill size={22} /><span className="nav-label">Recordatorios</span>
           </button>
-          <button 
-            className={`nav-item ${activeTab === 'historial' ? 'active' : ''}`} 
-            onClick={() => setActiveTab('historial')}
-          >
-            <ClipboardList size={22} className="nav-icon" />
-            <span className="nav-label">Historial</span>
+          <button className={`nav-item ${activeTab === 'historial' ? 'active' : ''}`} onClick={() => setActiveTab('historial')}>
+            <ClipboardList size={22} /><span className="nav-label">Historial</span>
           </button>
         </nav>
       )}
